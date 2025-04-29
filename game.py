@@ -5,7 +5,6 @@ Created on Mon April 28, 2025
 @author: Travis Michels
 """
 
-import time
 import os
 import msvcrt
 from deck import Deck
