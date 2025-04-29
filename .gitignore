@@ -1,0 +1,4 @@
+# Ignore Python cache
+.pylintrc
+__pycache__/
+*.pyc
