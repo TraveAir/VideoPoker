@@ -5,7 +5,7 @@ import copy
 
 class GameRound:
     def __init__(self):
-        self.denom = 0.1
+        self.denom = 1
         self.hands = []
         self.total_bet = 0
         self.total_win = 0
@@ -22,11 +22,27 @@ class GameManager:
         self.reveal_timer = 0
         self.reveal_interval = 100  # milliseconds
         self.fast_reveal = False
+        self.bonus_tracker = [1] * 10
 
     def start_new_round(self, denom):
         self.round = GameRound()
         self.round.denom = denom
         self.round.hands = create_round_hands(self.player)
+
+    def update_bonus_amount(self, index, win_type):
+        bonus_amounts = {
+            "Royal Flush": 7,
+            "Straight Flush": 7,
+            "Four of a Kind": 3,
+            "Full House": 12,
+            "Flush": 11,
+            "Straight": 8,
+            "Three of a Kind": 4,
+            "Two Pair": 3,
+            "Jacks or Better": 2,
+            "None": 1,
+        }
+        self.bonus_tracker[index] = bonus_amounts.get(win_type, 1)
 
 
 def create_round_hands(player):

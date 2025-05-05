@@ -277,10 +277,13 @@ class HandUIButton:
 
 
 class PokerHandDisplay:
-    def __init__(self, font, on_toggle_held, image_folder="assets/cards/"):
+    def __init__(
+        self, font, on_toggle_held, multiplier=1, image_folder="assets/cards/"
+    ):
         self.image_folder = image_folder
         self.font = font
         self.on_toggle_held = on_toggle_held
+        self.multiplier = multiplier
 
         card_scale = 1.1
 
@@ -390,11 +393,14 @@ class PokerHandDisplay:
 
         if self.show_win:
             win_text_surface = self.win_font.render(self.win_text, True, WHITE)
-            win_amount_surface = self.win_font.render(
-                str(self.win_credits), True, WHITE
-            )
+            win_amount_text = str(self.win_credits)
+            if self.multiplier > 1:
+                win_amount_text = f"({self.win_credits}x{self.multiplier}) = {self.win_credits * self.multiplier}"
+            win_amount_surface = self.win_font.render(win_amount_text, True, WHITE)
 
-            win_width = win_text_surface.get_width() + 40
+            win_width = (
+                max(win_text_surface.get_width(), win_amount_surface.get_width()) + 40
+            )
             win_height = (
                 win_text_surface.get_height() + win_amount_surface.get_height() + 10
             )
@@ -431,6 +437,22 @@ class PokerHandDisplay:
 
         screen.blit(self.surface, self.position)
 
+        if self.multiplier > 1:
+            mult_font = pygame.font.Font("assets/font/Courier_Prime_Sans_Bold.ttf", 60)
+            mult_text = mult_font.render(f"{self.multiplier}x", True, WHITE)
+
+            hand_height = self.card_rects[0].height
+
+            x = self.position[0] - 120
+            y = (
+                self.position[1]
+                + self.surface.get_height() // 2
+                - mult_text.get_height() // 2
+                + 15
+            )
+
+            screen.blit(mult_text, (x, y))
+
     def set_card(self, index, card):
         if 0 <= index < 5:
             path = f"{self.image_folder}{card}.png"
@@ -466,10 +488,11 @@ class PokerHandDisplay:
 
 
 class MiniHandDisplay:
-    def __init__(self, hand, index, image_folder="assets/cards/"):
+    def __init__(self, hand, index, multiplier=1, image_folder="assets/cards/"):
         self.hand = hand
         self.index = index
         self.image_folder = image_folder
+        self.multiplier = multiplier
         self.font = pygame.font.Font("assets/font/Courier_Prime_Sans_Bold.ttf", 18)
 
         self.card_width = 90
@@ -504,9 +527,14 @@ class MiniHandDisplay:
 
         if self.show_win:
             win_text_surface = self.font.render(self.win_text, True, WHITE)
-            win_amount_surface = self.font.render(str(self.win_credits), True, WHITE)
+            win_amount_text = str(self.win_credits)
+            if self.multiplier > 1:
+                win_amount_text = f"({self.win_credits}x{self.multiplier}) = {self.win_credits * self.multiplier}"
+            win_amount_surface = self.font.render(win_amount_text, True, WHITE)
 
-            win_width = win_text_surface.get_width() + 30
+            win_width = (
+                max(win_text_surface.get_width(), win_amount_surface.get_width()) + 30
+            )
             win_height = (
                 win_text_surface.get_height() + win_amount_surface.get_height() + 15
             )
@@ -541,6 +569,17 @@ class MiniHandDisplay:
 
             screen.blit(win_text_surface, win_text_rect)
             screen.blit(win_amount_surface, win_amount_rect)
+
+        if self.multiplier > 1:
+            mult_font = pygame.font.Font("assets/font/Courier_Prime_Sans_Bold.ttf", 25)
+            mult_text = mult_font.render(f"{self.multiplier}x", True, WHITE)
+            hand_height = self.card_height
+            hand_width = self.card_width * 5 + self.spacing * 4
+
+            x = self.position[0] - 50
+            y = self.position[1] + hand_height // 2 - mult_text.get_height() // 2
+
+            screen.blit(mult_text, (x, y))
 
     def show_win_info(self, win_text, credits):
         self.show_win = True

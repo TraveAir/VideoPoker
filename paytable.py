@@ -95,6 +95,10 @@ def determine_win_type(hand):
 
 def calculate_payout(win_type, bet_amount):
     """Calculates the payout based on the win type and bet amount."""
+
+    if bet_amount == 10:
+        bet_amount = 5
+
     if win_type == "Royal Flush" and bet_amount == 5:
         return 4000
 

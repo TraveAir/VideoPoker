@@ -19,7 +19,9 @@ SECONDARY_FONT = "assets/font/Courier_Prime_Sans.ttf"
 pygame.init()
 pygame.mixer.init()
 screen = pygame.display.set_mode((1920, 1080))
-pygame.display.set_caption("Video Poker")
+pygame.display.set_caption("Video Poker by Travis")
+icon = pygame.image.load("assets/cards/AS.png").convert_alpha()
+pygame.display.set_icon(pygame.transform.smoothscale(icon, (64, 64)))
 
 beep_sound = pygame.mixer.Sound("assets/audio/beep.mp3")
 error_sound = pygame.mixer.Sound("assets/audio/error.mp3")
@@ -45,7 +47,10 @@ def update_num_hands(player):
 
 def update_bet_per_hand(player):
     player.bet_per_hand += 1
-    if player.bet_per_hand > 5:
+    if player.bet_per_hand == 6:
+        player.bet_per_hand = 10
+
+    if player.bet_per_hand > 10:
         player.bet_per_hand = 1
 
 
@@ -183,14 +188,32 @@ def hold_cards_in_mini_hands():
             hand.cards[i].held = main_hand.cards[i].held
 
 
+def check_bonus_amounts():
+    if player.bet_per_hand != 10:
+        manager.bonus_tracker = [1] * 10
+    else:
+        for i in range(10):
+            if i >= player.num_hands:
+                manager.update_bonus_amount(i, "None")
+
+
+def clear_bonus_amounts():
+    manager.bonus_tracker = [1] * 10
+
+
 def on_deal_draw(manager):
     if manager.state == 4:
         if not manager.fast_reveal:
             manager.fast_reveal = True
         return
     if manager.state == 1:
+        check_bonus_amounts()
         mini_hand_displays.clear()
+        old_denom = manager.round.denom if manager.round else None
         manager.start_new_round(denom_button.get_denom())
+        if old_denom is not None and old_denom != denom_button.get_denom():
+            clear_bonus_amounts()
+        poker_hand_display.multiplier = manager.bonus_tracker[0]
         poker_hand_display.clear_cards()
         manager.round.total_bet = calculate_total_bet(player)
         for hand in manager.round.hands:
@@ -198,13 +221,16 @@ def on_deal_draw(manager):
         if not check_sufficient_balance_and_deduct(manager.round):
             return
         for i in range(1, len(manager.round.hands)):
-            mini_hand_displays.append(MiniHandDisplay(manager.round.hands[i], i - 1))
+            mini_hand_displays.append(
+                MiniHandDisplay(manager.round.hands[i], i - 1, manager.bonus_tracker[i])
+            )
         disable_ui_buttons()
         manager.current_hand_index = 0
         manager.reveal_index = 0
         manager.reveal_timer = pygame.time.get_ticks()
         manager.state = 2
         sound_played = False
+
         return
 
     if manager.state == 3:
@@ -299,7 +325,9 @@ while running:
                 if win_type != "None":
                     poker_hand_display.show_win_info(win_type, payout)
                     win_sound.play()
-                    manager.round.total_win += payout
+                    manager.round.total_win += payout * manager.bonus_tracker[0]
+                if hand.bet_amount == 10:
+                    manager.update_bonus_amount(0, win_type)
                 manager.current_hand_index = 1
                 manager.reveal_index = 0
 
@@ -328,7 +356,13 @@ while running:
                             manager.current_hand_index - 1
                         ].show_win_info(win_type, payout)
                         win_sound.play()
-                        manager.round.total_win += payout
+                        manager.round.total_win += (
+                            payout * manager.bonus_tracker[manager.current_hand_index]
+                        )
+                    if hand.bet_amount == 10:
+                        manager.update_bonus_amount(
+                            manager.current_hand_index, win_type
+                        )
                     manager.current_hand_index += 1
                     manager.reveal_index = 0
 
