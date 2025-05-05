@@ -30,6 +30,8 @@ win_sound = pygame.mixer.Sound("assets/audio/win.mp3")
 manager = gl.GameManager()
 player = manager.player
 
+sound_played = False
+
 
 def add_credit(player):
     player.balance += 10000
@@ -202,6 +204,7 @@ def on_deal_draw(manager):
         manager.reveal_index = 0
         manager.reveal_timer = pygame.time.get_ticks()
         manager.state = 2
+        sound_played = False
         return
 
     if manager.state == 3:
@@ -263,7 +266,9 @@ while running:
         win_type, payout = determine_win_type_and_payout(hand)
         if win_type != "None":
             poker_hand_display.show_win_info(win_type, payout)
-            win_sound.play()
+            if not sound_played:
+                sound_played = True
+                win_sound.play()
 
     elif manager.state == 4:  # Reveal draw
         poker_hand_display.disable_buttons()
