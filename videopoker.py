@@ -17,8 +17,15 @@ MAIN_FONT = "assets/font/Courier_Prime_Sans_Bold.ttf"
 SECONDARY_FONT = "assets/font/Courier_Prime_Sans.ttf"
 
 pygame.init()
+pygame.mixer.init()
 screen = pygame.display.set_mode((1920, 1080))
 pygame.display.set_caption("Video Poker")
+
+beep_sound = pygame.mixer.Sound("assets/audio/beep.mp3")
+error_sound = pygame.mixer.Sound("assets/audio/error.mp3")
+deal_sound = pygame.mixer.Sound("assets/audio/deal.mp3")
+deal_sound.set_volume(0.5)
+win_sound = pygame.mixer.Sound("assets/audio/win.mp3")
 
 manager = gl.GameManager()
 player = manager.player
@@ -98,7 +105,7 @@ bet_per_hand_button = HandUIButton(
     text="Bet Per Hand",
     x=465,
     y=1015,
-    on_click=lambda: update_bet_per_hand(player),
+    on_click=lambda: (update_bet_per_hand(player), beep_sound.play()),
 )
 
 num_hands_box = InfoBox(
@@ -113,7 +120,7 @@ num_hands_button = HandUIButton(
     text="Num Hands",
     x=650,
     y=1015,
-    on_click=lambda: update_num_hands(player),
+    on_click=lambda: (update_num_hands(player), beep_sound.play()),
 )
 
 deal_draw_button = DealDrawButton(
@@ -144,7 +151,7 @@ def reset_unheld_card_image(hand):
 
 def check_sufficient_balance_and_deduct(round):
     if player.balance < (round.total_bet * round.denom):
-        print("Insufficient balance!")
+        error_sound.play()
         return False
     else:
         player.balance -= round.total_bet * round.denom
@@ -243,6 +250,7 @@ while running:
                 card = hand.cards[manager.reveal_index]
                 card.is_face_down = False
                 poker_hand_display.set_card(manager.reveal_index, card)
+                deal_sound.play()
                 manager.reveal_index += 1
                 manager.reveal_timer = now
         else:
@@ -255,6 +263,7 @@ while running:
         win_type, payout = determine_win_type_and_payout(hand)
         if win_type != "None":
             poker_hand_display.show_win_info(win_type, payout)
+            win_sound.play()
 
     elif manager.state == 4:  # Reveal draw
         poker_hand_display.disable_buttons()
@@ -276,12 +285,15 @@ while running:
                     card = hand.cards[manager.reveal_index]
                     card.is_face_down = False
                     poker_hand_display.set_card(manager.reveal_index, card)
+                    if not manager.fast_reveal:
+                        deal_sound.play()
                     manager.reveal_index += 1
                     manager.reveal_timer = now
             else:
                 win_type, payout = determine_win_type_and_payout(hand)
                 if win_type != "None":
                     poker_hand_display.show_win_info(win_type, payout)
+                    win_sound.play()
                     manager.round.total_win += payout
                 manager.current_hand_index = 1
                 manager.reveal_index = 0
@@ -300,6 +312,8 @@ while running:
                 if manager.reveal_index < 5:
                     if now - manager.reveal_timer > interval:
                         hand.cards[manager.reveal_index].is_face_down = False
+                        if not manager.fast_reveal:
+                            deal_sound.play()
                         manager.reveal_index += 1
                         manager.reveal_timer = now
                 else:
@@ -308,6 +322,7 @@ while running:
                         mini_hand_displays[
                             manager.current_hand_index - 1
                         ].show_win_info(win_type, payout)
+                        win_sound.play()
                         manager.round.total_win += payout
                     manager.current_hand_index += 1
                     manager.reveal_index = 0
