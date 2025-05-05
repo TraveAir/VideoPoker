@@ -26,4 +26,4 @@ class Deck:
     def deal(self) -> Card:
         if not self.cards:
             raise ValueError("No cards left in deck")
-        return self.cards.pop(0)
+        return self.cards.pop()

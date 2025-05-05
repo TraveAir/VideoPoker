@@ -23,8 +23,7 @@ def create_player():
     # name = input("Enter your name: ")
     # if name == "":
     #     name = "Travis"
-    name = "Travis"
-    return Player(name)
+    return Player()
 
 
 def print_hand(hand):

@@ -1,6 +1,3 @@
-from card import Card
-from hand import Hand
-
 RANK_ORDER = {
     "2": 2,
     "3": 3,

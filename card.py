@@ -29,5 +29,12 @@ class Card:
         # Flag for held cards
         self.held = False
 
+        # Flag for turned over cards
+        self.is_face_down = True
+
+    def toggle_held(self):
+        """Toggle the held state of the card."""
+        self.held = not self.held
+
     def __repr__(self):
         return f"{self.rank}{self.suit}"
