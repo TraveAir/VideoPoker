@@ -1,6 +1,7 @@
 import pygame
 import gamelogic as gl
 import ui_utils
+import sys, os
 from game import determine_win_type_and_payout
 from ui_utils import (
     InfoBox,
@@ -12,6 +13,9 @@ from ui_utils import (
     DenomButton,
 )
 
+if getattr(sys, "frozen", False):
+    base_path = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+    os.chdir(base_path)
 
 MAIN_FONT = "assets/font/Courier_Prime_Sans_Bold.ttf"
 SECONDARY_FONT = "assets/font/Courier_Prime_Sans.ttf"
