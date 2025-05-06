@@ -233,7 +233,6 @@ def on_deal_draw(manager):
         manager.reveal_index = 0
         manager.reveal_timer = pygame.time.get_ticks()
         manager.state = 2
-        sound_played = False
 
         return
 
@@ -374,6 +373,7 @@ while running:
         manager.fast_reveal = False
         pay_player(manager)
         enable_ui_buttons()
+        sound_played = False
         manager.state = 1
 
     # Draw the poker hand display
