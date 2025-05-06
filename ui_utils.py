@@ -545,7 +545,7 @@ class MiniHandDisplay:
 
             box_rect = pygame.Rect(
                 center_x - win_width // 2,
-                center_y,
+                center_y - win_height // 2,
                 win_width,
                 win_height,
             )
