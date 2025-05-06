@@ -503,7 +503,7 @@ class MiniHandDisplay:
         row = index // 3
 
         start_x = 100 + col * (self.card_width * 5 + self.spacing * 4 + 100)
-        start_y = 60 + row * (self.card_height + 70)
+        start_y = 60 + (2 - row) * (self.card_height + 70)
 
         self.position = (start_x, start_y)
 
