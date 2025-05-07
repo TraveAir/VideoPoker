@@ -607,6 +607,8 @@ class DenomButton:
             ("25¢", 25),
             ("50¢", 50),
             ("$1", 100),
+            ("$2", 200),
+            ("$5", 500),
         ]
         self.current_index = 0
         self.menu_open = False
