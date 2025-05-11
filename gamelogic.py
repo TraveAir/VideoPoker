@@ -22,7 +22,7 @@ class GameManager:
         self.reveal_timer = 0
         self.reveal_interval = 100  # milliseconds
         self.fast_reveal = False
-        self.bonus_tracker = [1] * 10
+        self.bonus_tracker = [1] * 100
 
     def start_new_round(self, denom):
         self.round = GameRound()

@@ -1,4 +1,11 @@
 import pygame
+import os
+
+MINI_W, MINI_H = 30, 52
+IMAGE_FOLDER = "assets/cards/"
+
+PRELOADED_MINI: dict[str, pygame.Surface] = {}
+
 
 RED = (255, 0, 0)
 WHITE = (255, 255, 255)
@@ -9,9 +16,32 @@ DARK_BLUE = (2, 12, 92)
 YELLOW = (255, 255, 0)
 DARK_YELLOW = (170, 170, 0)
 
+WIN_COLORS = {
+    "Jacks or Better": (255, 165, 0),  # Orange
+    "Two Pair": (0, 128, 0),  # Green
+    "Three of a Kind": (0, 206, 209),  # Light Blue (DarkTurquoise)
+    "Straight": (128, 0, 128),  # Purple
+    "Flush": (255, 255, 0),  # Yellow
+    "Full House": (255, 0, 0),  # Red
+    "Four of a Kind": (255, 215, 0),  # Gold
+    "Straight Flush": (255, 20, 147),  # Hot Pink
+    "Royal Flush": (139, 69, 19),  # SaddleBrown
+}
+
 
 def draw_bottom_bar(screen):
     pygame.draw.rect(screen, DARK_BLUE, (0, 900, 1920, 1080))
+
+
+def preload_mini_cards():
+    PRELOADED_MINI.clear()
+    back = pygame.image.load(f"{IMAGE_FOLDER}cardBack_mini.png").convert_alpha()
+    PRELOADED_MINI["back"] = pygame.transform.scale(back, (MINI_W, MINI_H))
+    for name in os.listdir(IMAGE_FOLDER):
+        if name.endswith("_mini.png") and name != "cardBack_mini.png":
+            key = name[:-9]
+            surf = pygame.image.load(os.path.join(IMAGE_FOLDER, name)).convert_alpha()
+            PRELOADED_MINI[key] = pygame.transform.scale(surf, (MINI_W, MINI_H))
 
 
 class Button:
@@ -300,7 +330,7 @@ class PokerHandDisplay:
         ]
         total_width = 5 * card_width + 4 * spacing
         x = (1920 - total_width) // 2
-        y = 600
+        y = 620
         self.position = (x, y)
         self.surface = pygame.Surface(
             (total_width, card_height + text_offset), pygame.SRCALPHA
@@ -443,7 +473,7 @@ class PokerHandDisplay:
 
             hand_height = self.card_rects[0].height
 
-            x = self.position[0] - 120
+            x = self.position[0] - 90
             y = (
                 self.position[1]
                 + self.surface.get_height() // 2
@@ -576,7 +606,7 @@ class MiniHandDisplay:
             hand_height = self.card_height
             hand_width = self.card_width * 5 + self.spacing * 4
 
-            x = self.position[0] - 50
+            x = self.position[0] - 75
             y = self.position[1] + hand_height // 2 - mult_text.get_height() // 2
 
             screen.blit(mult_text, (x, y))
@@ -590,6 +620,120 @@ class MiniHandDisplay:
         self.show_win = False
         self.win_text = ""
         self.win_credits = 0
+
+
+class WinCounterBox:
+    def __init__(self, win_type, position, count=0):
+        self.font = pygame.font.Font("assets/font/Courier_Prime_Sans_Bold.ttf", 20)
+        self.win_type = win_type
+        self.position = position
+        self.count = count
+        self.size = (180, 50)
+        self.surface = pygame.Surface((200, 50), pygame.SRCALPHA)
+
+    def increment(self):
+        self.count += 1
+
+    def draw(self, screen):
+        if self.count == 0:
+            return
+
+        x, y = self.position
+        w, h = self.size
+
+        outer_color = WIN_COLORS.get(self.win_type)
+        inner_color = BLACK
+        text_color = WHITE
+
+        pygame.draw.rect(screen, outer_color, (x, y, w, h))
+
+        # Define inner black rectangles
+        label_rect = pygame.Rect(x + 4, y + 4, int(w * 0.7) - 8, h - 8)
+        count_rect = pygame.Rect(x + int(w * 0.7) + 4, y + 4, int(w * 0.3) - 8, h - 8)
+
+        pygame.draw.rect(screen, inner_color, label_rect)
+        pygame.draw.rect(screen, inner_color, count_rect)
+
+        # Handle multi-line labels
+        lines = self.win_type.split(" ")  # crude word splitting
+        if len(lines) > 2:
+            lines = [" ".join(lines[:2]), " ".join(lines[2:])]  # force 2 lines max
+        elif len(lines) == 1:
+            lines = [lines[0]]
+
+        # Render and center label text
+        line_surfs = [self.font.render(line, True, text_color) for line in lines]
+        total_height = sum(surf.get_height() for surf in line_surfs)
+        y_offset = label_rect.top + (label_rect.height - total_height) // 2
+
+        for surf in line_surfs:
+            rect = surf.get_rect(centerx=label_rect.centerx, y=y_offset)
+            screen.blit(surf, rect)
+            y_offset += surf.get_height()
+
+        # Render count
+        count_surf = self.font.render(str(self.count), True, text_color)
+        screen.blit(count_surf, count_surf.get_rect(center=count_rect.center))
+
+
+class HundredHandDisplay:
+    def __init__(self, hands, image_folder="assets/cards/", font=None):
+        assert len(hands) == 99
+        self.hands = hands
+        self.image_folder = image_folder
+        self.font = font or pygame.font.Font(
+            "assets/font/Courier_Prime_Sans_Bold.ttf", 20
+        )
+        self.multipliers = [1] * 99
+        self.win_types = ["None"] * 99
+
+        self.card_width = 30
+        self.card_height = 52
+        self.spacing = 1
+        self.col_count = 11
+        self.row_count = 9
+        self.hand_spacing_x = 11
+        self.hand_spacing_y = 16
+
+        self.hand_width = self.card_width * 5 + self.spacing * 4
+        self.hand_height = self.card_height
+
+        self.start_x = 60
+        self.start_y = 5
+
+    def draw(self, screen):
+        for i, hand in enumerate(self.hands):
+            col = i % self.col_count
+            row = i // self.col_count
+            inv_row = self.row_count - 1 - row
+
+            x0 = self.start_x + col * (self.hand_width + self.hand_spacing_x)
+            y0 = self.start_y + inv_row * (self.hand_height + self.hand_spacing_y)
+
+            for j, card in enumerate(hand.cards):
+
+                filename = "back" if card.is_face_down else str(card)
+                img = PRELOADED_MINI[filename]
+
+                x = x0 + j * (self.card_width + self.spacing)
+                y = y0
+                screen.blit(img, (x, y))
+
+            if self.win_types[i] != "None":
+                color = WIN_COLORS.get(self.win_types[i])
+                highlight_rect = pygame.Rect(x0, y0, self.hand_width, self.hand_height)
+                pygame.draw.rect(screen, color, highlight_rect, 7)
+
+            if self.multipliers[i] > 1:
+                mult_text = self.font.render(f"{self.multipliers[i]}x", True, WHITE)
+                text_rect = mult_text.get_rect(
+                    center=(x0 + self.hand_width // 2, y0 + self.card_height + 9)
+                )
+                screen.blit(mult_text, text_rect)
+
+    def set_win_type(self, index, win_type):
+        if 0 <= index < len(self.win_types):
+            self.win_types[index] = win_type
 
 
 class DenomButton:
